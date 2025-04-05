@@ -3,6 +3,7 @@
 import os
 import time
 import copy
+import sys
 from typing import Dict, List, Optional, Tuple, Union, Any
 from pathlib import Path
 
@@ -10,7 +11,8 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-from .utils.image_utils import LoadImage, VisualizeResult
+from .utils.image_utils import LoadImage
+from .utils.visualization import OCRVisualizer
 from .detection import TextDetector
 from .classification import TextClassifier
 from .recognition import TextRecognizer
@@ -94,6 +96,9 @@ class OnnxOCR:
             
         if self.use_rec:
             self.text_recognizer = TextRecognizer(self.config["rec"])
+            
+        # 初始化可视化器
+        self.visualizer = OCRVisualizer(self.config.get("print_verbose", False))
         
     def _update_config(self, config: Dict[str, Any]) -> None:
         """更新配置参数"""
@@ -379,26 +384,32 @@ class OnnxOCR:
         times = [det_elapse, cls_elapse, rec_elapse]
             
         return result, times
-
+        
     def visualize(self, img_content: Union[str, np.ndarray, bytes, Path], 
                  result: List, font_path: Optional[str] = None) -> np.ndarray:
-        """可视化OCR结果"""
-        img = self.load_img(img_content)
+        """
+        可视化OCR结果
         
-        # 如果没有结果，直接返回原图
-        if result is None or not result:
-            return img
+        Args:
+            img_content: 输入图像
+            result: OCR识别结果
+            font_path: 字体路径，如果为None则自动获取系统字体
             
-        vis = VisualizeResult()
+        Returns:
+            可视化后的图像
+        """
+        return self.visualizer.visualize(img_content, result, font_path)
         
-        # 根据结果类型选择可视化方法
-        if len(result[0]) == 1:  # 只有框
-            boxes = [item[0] for item in result]
-            return vis(img, boxes)
-        elif len(result[0]) > 2:  # 有框和文本
-            boxes = [item[0] for item in result]
-            texts = [item[1] for item in result]
-            scores = [item[2] if len(item) > 2 else 1.0 for item in result]
-            return vis(img, boxes, texts, scores, font_path)
+    def visualize_to_file(self, img_content: Union[str, np.ndarray, bytes, Path], 
+                         result: List, output_path: str, 
+                         font_path: Optional[str] = None) -> None:
+        """
+        将可视化结果保存到文件
         
-        return img
+        Args:
+            img_content: 输入图像
+            result: OCR识别结果
+            output_path: 输出图像路径
+            font_path: 字体路径，如果为None则自动获取系统字体
+        """
+        self.visualizer.visualize_to_file(img_content, result, output_path, font_path)

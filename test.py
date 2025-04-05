@@ -12,6 +12,7 @@ rec_model_path = os.path.join(current_dir, "models", "ch_PP-OCRv4_rec_infer.onnx
 # 配置OCR引擎
 config = {
     "use_cls": False,  # 禁用方向分类功能，因为没有分类模型
+    "print_verbose": True,  # 显示详细日志
     "det": {
         "model_path": det_model_path
     },
@@ -41,50 +42,7 @@ else:
 
 print(f"处理时间: 检测={times[0]:.4f}s, 方向分类={times[1]:.4f}s, 识别={times[2]:.4f}s, 总计={sum(times):.4f}s")
 
-# 获取中文字体路径
-def get_system_font():
-    """获取系统可用的中文字体"""
-    if sys.platform.startswith('win'):
-        # Windows系统字体路径
-        font_paths = [
-            "C:/Windows/Fonts/simhei.ttf",  # 黑体
-            "C:/Windows/Fonts/simsun.ttc",   # 宋体
-            "C:/Windows/Fonts/simkai.ttf",   # 楷体
-            "C:/Windows/Fonts/msyh.ttc"      # 微软雅黑
-        ]
-    elif sys.platform.startswith('darwin'):
-        # macOS系统字体路径
-        font_paths = [
-            "/System/Library/Fonts/PingFang.ttc",
-            "/System/Library/Fonts/STHeiti Light.ttc",
-            "/System/Library/Fonts/STHeiti Medium.ttc"
-        ]
-    else:
-        # Linux系统字体路径
-        font_paths = [
-            "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
-            "/usr/share/fonts/truetype/arphic/uming.ttc"
-        ]
-    
-    # 检查字体文件是否存在
-    for font_path in font_paths:
-        if os.path.exists(font_path):
-            return font_path
-    
-    return None
-
-# 获取系统中文字体
-font_path = get_system_font()
-if font_path:
-    print(f"使用中文字体: {font_path}")
-else:
-    print("未找到系统中文字体，将使用默认字体")
-
-# 可视化结果（如果有图像路径）
-if os.path.exists(image_path):
-    # 使用中文字体
-    vis_img = ocr.visualize(image_path, result, font_path)
-    
-    # 保存可视化结果
-    cv2.imwrite("./visualized_image.jpg", vis_img)
-    print("可视化结果已保存到 ./visualized_image.jpg")
+# 可视化结果并保存（自动获取系统字体）
+if os.path.exists(image_path) and result:
+    # 使用新的可视化并保存方法
+    ocr.visualize_to_file(image_path, result, "./visualized_image.jpg")

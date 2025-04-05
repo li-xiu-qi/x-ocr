@@ -71,7 +71,7 @@ visualized_image.jpg
 .DS_Store
 Thumbs.db
 desktop.ini
-
+models
 # 大型模型文件
 # 如果需要将模型文件排除在外，请取消下面的注释
 # models/*.onnx
